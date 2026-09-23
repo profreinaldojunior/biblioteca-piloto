@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca Escolar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .tab-btn.active { border-color: #4f46e5; color: #4f46e5; background-color: #eef2ff; }
+  .spinner { border: 3px solid #e5e7eb; border-top-color: #4f46e5; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+
+<div class="max-w-5xl mx-auto p-4 sm:p-6">
+
+  <header class="mb-6">
+    <h1 class="text-2xl sm:text-3xl font-bold text-indigo-700">📚 Biblioteca Escolar</h1>
+    <p class="text-sm text-gray-500">Sistema de empréstimo de livros</p>
+  </header>
+
+  <!-- Configuração Supabase -->
+  <div id="config-panel" class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+    <h2 class="font-semibold mb-3 text-gray-700">Configuração do Supabase</h2>
+    <p class="text-xs text-gray-500 mb-3">
+      Você pode preencher os campos abaixo (salvos no navegador) ou editar as constantes <code class="bg-gray-100 px-1 rounded">SUPABASE_URL</code> e <code class="bg-gray-100 px-1 rounded">SUPABASE_ANON_KEY</code> diretamente no código, no início da tag &lt;script&gt;.
+    </p>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <input id="input-url" type="text" placeholder="SUPABASE_URL" class="border rounded-lg px-3 py-2 text-sm w-full">
+      <input id="input-key" type="text" placeholder="SUPABASE_ANON_KEY" class="border rounded-lg px-3 py-2 text-sm w-full">
+    </div>
+    <div class="mt-3 flex items-center gap-3">
+      <button id="btn-connect" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700">Conectar</button>
+      <span id="connection-status" class="text-sm text-gray-500"></span>
+    </div>
+  </div>
+
+  <div id="app" class="hidden">
+
+    <!-- Abas -->
+    <div class="flex gap-2 border-b mb-6 overflow-x-auto">
+      <button data-tab="livros" class="tab-btn active px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">📖 Livros</button>
+      <button data-tab="alunos" class="tab-btn px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">🧑‍🎓 Alunos</button>
+      <button data-tab="emprestimos" class="tab-btn px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">🔄 Empréstimos</button>
+    </div>
+
+    <!-- ABA LIVROS -->
+    <section id="tab-livros" class="tab-content">
+      <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+        <h3 class="font-semibold mb-3">Cadastrar novo livro</h3>
+        <form id="form-livro" class="grid sm:grid-cols-2 gap-3">
+          <input required name="nome" placeholder="Nome do livro" class="border rounded-lg px-3 py-2 text-sm">
+          <input required name="autor" placeholder="Autor" class="border rounded-lg px-3 py-2 text-sm">
+          <input name="tipo" placeholder="Tipo (ex: Romance, Didático)" class="border rounded-lg px-3 py-2 text-sm">
+          <input name="obs" placeholder="Observações" class="border rounded-lg px-3 py-2 text-sm">
+          <button type="submit" class="sm:col-span-2 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700">Cadastrar Livro</button>
+        </form>
+      </div>
+
+      <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b">
+          <h3 class="font-semibold">Livros cadastrados</h3>
+          <input id="filtro-livros" placeholder="Buscar..." class="border rounded-lg px-3 py-1.5 text-sm">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-left">
+              <tr>
+                <th class="p-3">Nome</th>
+                <th class="p-3">Autor</th>
+                <th class="p-3">Tipo</th>
+                <th class="p-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="lista-livros"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA ALUNOS -->
+    <section id="tab-alunos" class="tab-content hidden">
+      <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+        <h3 class="font-semibold mb-3">Cadastrar novo aluno</h3>
+        <form id="form-aluno" class="grid sm:grid-cols-2 gap-3">
+          <input required name="matricula" placeholder="Matrícula" class="border rounded-lg px-3 py-2 text-sm">
+          <input required name="nome" placeholder="Nome do aluno" class="border rounded-lg px-3 py-2 text-sm">
+          <input name="turma" placeholder="Turma" class="border rounded-lg px-3 py-2 text-sm">
+          <input name="contato_telefone" placeholder="Telefone de contato" class="border rounded-lg px-3 py-2 text-sm">
+          <input name="obs" placeholder="Observações" class="border rounded-lg px-3 py-2 text-sm sm:col-span-2">
+          <button type="submit" class="sm:col-span-2 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700">Cadastrar Aluno</button>
+        </form>
+      </div>
+
+      <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b">
+          <h3 class="font-semibold">Alunos cadastrados</h3>
+          <input id="filtro-alunos" placeholder="Buscar..." class="border rounded-lg px-3 py-1.5 text-sm">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-left">
+              <tr>
+                <th class="p-3">Matrícula</th>
+                <th class="p-3">Nome</th>
+                <th class="p-3">Turma</th>
+                <th class="p-3">Telefone</th>
+              </tr>
+            </thead>
+            <tbody id="lista-alunos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA EMPRÉSTIMOS -->
+    <section id="tab-emprestimos" class="tab-content hidden">
+      <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+        <h3 class="font-semibold mb-3">Registrar novo empréstimo</h3>
+        <form id="form-emprestimo" class="grid sm:grid-cols-2 gap-3">
+          <select required name="livro_id" id="select-livro" class="border rounded-lg px-3 py-2 text-sm">
+            <option value="">Selecione um livro disponível</option>
+          </select>
+          <select required name="aluno_matricula" id="select-aluno" class="border rounded-lg px-3 py-2 text-sm">
+            <option value="">Selecione um aluno</option>
+          </select>
+          <label class="text-xs text-gray-500 sm:col-span-2 -mb-2">Data prevista de devolução</label>
+          <input required type="date" name="data_prevista_devolucao" class="border rounded-lg px-3 py-2 text-sm sm:col-span-2">
+          <button type="submit" class="sm:col-span-2 bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700">Registrar Empréstimo</button>
+        </form>
+      </div>
+
+      <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b">
+          <h3 class="font-semibold">Empréstimos ativos</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-left">
+              <tr>
+                <th class="p-3">Livro</th>
+                <th class="p-3">Aluno</th>
+                <th class="p-3">Empréstimo</th>
+                <th class="p-3">Previsão</th>
+                <th class="p-3"></th>
+              </tr>
+            </thead>
+            <tbody id="lista-emprestimos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm shadow-lg"></div>
+
+</div>
+
+<script>
+// ======= CONFIGURE AQUI (opcional, ou use os campos na tela) =======
+const SUPABASE_URL = "https://emallymjeczjkcvlysfw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_mDzLmdGZS924x_LhcWNSOQ_ssljAfmN";
+// =====================================================================
+
+let supabase = null;
+
+function toast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg text-sm shadow-lg text-white ${isError ? 'bg-red-600' : 'bg-gray-900'}`;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('pt-BR');
+}
+
+// ---------- Conexão ----------
+document.getElementById('btn-connect').addEventListener('click', connect);
+
+function connect() {
+  const url = document.getElementById('input-url').value.trim() || SUPABASE_URL;
+  const key = document.getElementById('input-key').value.trim() || SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    toast('Preencha a URL e a chave do Supabase.', true);
+    return;
+  }
+
+  try {
+    supabase = window.supabase.createClient(url, key);
+    localStorage.setItem('biblioteca_supabase_url', url);
+    localStorage.setItem('biblioteca_supabase_key', key);
+    document.getElementById('connection-status').textContent = '✅ Conectado';
+    document.getElementById('config-panel').classList.add('opacity-60');
+    document.getElementById('app').classList.remove('hidden');
+    loadAll();
+  } catch (e) {
+    toast('Erro ao conectar: ' + e.message, true);
+  }
+}
+
+// Restaurar credenciais salvas
+window.addEventListener('DOMContentLoaded', () => {
+  const savedUrl = localStorage.getItem('biblioteca_supabase_url') || SUPABASE_URL;
+  const savedKey = localStorage.getItem('biblioteca_supabase_key') || SUPABASE_ANON_KEY;
+  if (savedUrl) document.getElementById('input-url').value = savedUrl;
+  if (savedKey) document.getElementById('input-key').value = savedKey;
+  if (savedUrl && savedKey) connect();
+});
+
+// ---------- Abas ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// ---------- Carregamento geral ----------
+async function loadAll() {
+  await Promise.all([loadLivros(), loadAlunos(), loadEmprestimos()]);
+}
+
+// ---------- LIVROS ----------
+let livrosCache = [];
+
+async function loadLivros() {
+  const { data, error } = await supabase.from('livros').select('*').order('nome');
+  if (error) { toast('Erro ao carregar livros: ' + error.message, true); return; }
+  livrosCache = data || [];
+  renderLivros();
+  renderSelectLivros();
+}
+
+function renderLivros(filter = '') {
+  const tbody = document.getElementById('lista-livros');
+  const f = filter.toLowerCase();
+  const rows = livrosCache.filter(l =>
+    l.nome?.toLowerCase().includes(f) || l.autor?.toLowerCase().includes(f)
+  );
+  tbody.innerHTML = rows.map(l => `
+    <tr class="border-t">
+      <td class="p-3">${l.nome}</td>
+      <td class="p-3">${l.autor || '-'}</td>
+      <td class="p-3">${l.tipo || '-'}</td>
+      <td class="p-3">
+        <span class="px-2 py-1 rounded-full text-xs font-medium ${l.disponivel ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+          ${l.disponivel ? 'Disponível' : 'Emprestado'}
+        </span>
+      </td>
+    </tr>
+  `).join('') || `<tr><td class="p-3 text-gray-400" colspan="4">Nenhum livro encontrado.</td></tr>`;
+}
+
+function renderSelectLivros() {
+  const select = document.getElementById('select-livro');
+  const disponiveis = livrosCache.filter(l => l.disponivel);
+  select.innerHTML = '<option value="">Selecione um livro disponível</option>' +
+    disponiveis.map(l => `<option value="${l.id}">${l.nome} — ${l.autor || ''}</option>`).join('');
+}
+
+document.getElementById('filtro-livros').addEventListener('input', e => renderLivros(e.target.value));
+
+document.getElementById('form-livro').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const payload = {
+    nome: fd.get('nome'),
+    autor: fd.get('autor'),
+    tipo: fd.get('tipo') || null,
+    obs: fd.get('obs') || null,
+    disponivel: true
+  };
+  const { error } = await supabase.from('livros').insert(payload);
+  if (error) { toast('Erro ao cadastrar livro: ' + error.message, true); return; }
+  toast('Livro cadastrado com sucesso!');
+  form.reset();
+  await loadLivros();
+});
+
+// ---------- ALUNOS ----------
+let alunosCache = [];
+
+async function loadAlunos() {
+  const { data, error } = await supabase.from('alunos').select('*').order('nome');
+  if (error) { toast('Erro ao carregar alunos: ' + error.message, true); return; }
+  alunosCache = data || [];
+  renderAlunos();
+  renderSelectAlunos();
+}
+
+function renderAlunos(filter = '') {
+  const tbody = document.getElementById('lista-alunos');
+  const f = filter.toLowerCase();
+  const rows = alunosCache.filter(a =>
+    a.nome?.toLowerCase().includes(f) || String(a.matricula).toLowerCase().includes(f)
+  );
+  tbody.innerHTML = rows.map(a => `
+    <tr class="border-t">
+      <td class="p-3">${a.matricula}</td>
+      <td class="p-3">${a.nome}</td>
+      <td class="p-3">${a.turma || '-'}</td>
+      <td class="p-3">${a.contato_telefone || '-'}</td>
+    </tr>
+  `).join('') || `<tr><td class="p-3 text-gray-400" colspan="4">Nenhum aluno encontrado.</td></tr>`;
+}
+
+function renderSelectAlunos() {
+  const select = document.getElementById('select-aluno');
+  select.innerHTML = '<option value="">Selecione um aluno</option>' +
+    alunosCache.map(a => `<option value="${a.matricula}">${a.nome} (${a.matricula})</option>`).join('');
+}
+
+document.getElementById('filtro-alunos').addEventListener('input', e => renderAlunos(e.target.value));
+
+document.getElementById('form-aluno').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const payload = {
+    matricula: fd.get('matricula'),
+    nome: fd.get('nome'),
+    turma: fd.get('turma') || null,
+    contato_telefone: fd.get('contato_telefone') || null,
+    obs: fd.get('obs') || null
+  };
+  const { error } = await supabase.from('alunos').insert(payload);
+  if (error) { toast('Erro ao cadastrar aluno: ' + error.message, true); return; }
+  toast('Aluno cadastrado com sucesso!');
+  form.reset();
+  await loadAlunos();
+});
+
+// ---------- EMPRÉSTIMOS ----------
+async function loadEmprestimos() {
+  const { data, error } = await supabase
+    .from('emprestimos')
+    .select('*, livros(nome), alunos(nome)')
+    .eq('status', 'ativo')
+    .order('data_prevista_devolucao');
+  if (error) { toast('Erro ao carregar empréstimos: ' + error.message, true); return; }
+  renderEmprestimos(data || []);
+}
+
+function renderEmprestimos(rows) {
+  const tbody = document.getElementById('lista-emprestimos');
+  tbody.innerHTML = rows.map(e => `
+    <tr class="border-t">
+      <td class="p-3">${e.livros?.nome || '—'}</td>
+      <td class="p-3">${e.alunos?.nome || '—'}</td>
+      <td class="p-3">${fmtDate(e.data_emprestimo)}</td>
+      <td class="p-3">${fmtDate(e.data_prevista_devolucao)}</td>
+      <td class="p-3">
+        <button data-id="${e.id}" data-livro="${e.livro_id}" class="btn-devolver bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-medium">
+          Registrar Devolução
+        </button>
+      </td>
+    </tr>
+  `).join('') || `<tr><td class="p-3 text-gray-400" colspan="5">Nenhum empréstimo ativo.</td></tr>`;
+
+  document.querySelectorAll('.btn-devolver').forEach(btn => {
+    btn.addEventListener('click', () => registrarDevolucao(btn.dataset.id, btn.dataset.livro));
+  });
+}
+
+document.getElementById('form-emprestimo').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const livro_id = fd.get('livro_id');
+  const aluno_matricula = fd.get('aluno_matricula');
+  const data_prevista_devolucao = fd.get('data_prevista_devolucao');
+
+  if (!livro_id || !aluno_matricula || !data_prevista_devolucao) {
+    toast('Preencha todos os campos.', true);
+    return;
+  }
+
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const { error: errEmp } = await supabase.from('emprestimos').insert({
+    livro_id,
+    aluno_matricula,
+    data_emprestimo: hoje,
+    data_prevista_devolucao,
+    status: 'ativo'
+  });
+  if (errEmp) { toast('Erro ao registrar empréstimo: ' + errEmp.message, true); return; }
+
+  const { error: errLivro } = await supabase.from('livros').update({ disponivel: false }).eq('id', livro_id);
+  if (errLivro) { toast('Empréstimo criado, mas houve erro ao atualizar o livro: ' + errLivro.message, true); }
+
+  toast('Empréstimo registrado com sucesso!');
+  form.reset();
+  await Promise.all([loadLivros(), loadEmprestimos()]);
+});
+
+async function registrarDevolucao(emprestimoId, livroId) {
+  const hoje = new Date().toISOString().slice(0, 10);
+
+  const { error: errEmp } = await supabase
+    .from('emprestimos')
+    .update({ status: 'devolvido', data_devolucao_real: hoje })
+    .eq('id', emprestimoId);
+  if (errEmp) { toast('Erro ao registrar devolução: ' + errEmp.message, true); return; }
+
+  const { error: errLivro } = await supabase.from('livros').update({ disponivel: true }).eq('id', livroId);
+  if (errLivro) { toast('Devolução registrada, mas houve erro ao liberar o livro: ' + errLivro.message, true); }
+
+  toast('Devolução registrada!');
+  await Promise.all([loadLivros(), loadEmprestimos()]);
+}
+</script>
+
+</body>
+</html>
