@@ -165,7 +165,7 @@ const SUPABASE_URL = "https://emallymjeczjkcvlysfw.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_mDzLmdGZS924x_LhcWNSOQ_ssljAfmN";
 // =====================================================================
 
-let supabase = null;
+let supabaseClient = null;
 
 function toast(msg, isError = false) {
   const el = document.getElementById('toast');
@@ -194,7 +194,7 @@ function connect() {
   }
 
   try {
-    supabase = window.supabase.createClient(url, key);
+    supabaseClient = window.supabase.createClient(url, key);
     localStorage.setItem('biblioteca_supabase_url', url);
     localStorage.setItem('biblioteca_supabase_key', key);
     document.getElementById('connection-status').textContent = '✅ Conectado';
@@ -234,7 +234,7 @@ async function loadAll() {
 let livrosCache = [];
 
 async function loadLivros() {
-  const { data, error } = await supabase.from('livros').select('*').order('nome');
+  const { data, error } = await supabaseClient.from('livros').select('*').order('nome');
   if (error) { toast('Erro ao carregar livros: ' + error.message, true); return; }
   livrosCache = data || [];
   renderLivros();
@@ -281,7 +281,7 @@ document.getElementById('form-livro').addEventListener('submit', async (e) => {
     obs: fd.get('obs') || null,
     disponivel: true
   };
-  const { error } = await supabase.from('livros').insert(payload);
+  const { error } = await supabaseClient.from('livros').insert(payload);
   if (error) { toast('Erro ao cadastrar livro: ' + error.message, true); return; }
   toast('Livro cadastrado com sucesso!');
   form.reset();
@@ -292,7 +292,7 @@ document.getElementById('form-livro').addEventListener('submit', async (e) => {
 let alunosCache = [];
 
 async function loadAlunos() {
-  const { data, error } = await supabase.from('alunos').select('*').order('nome');
+  const { data, error } = await supabaseClient.from('alunos').select('*').order('nome');
   if (error) { toast('Erro ao carregar alunos: ' + error.message, true); return; }
   alunosCache = data || [];
   renderAlunos();
@@ -334,7 +334,7 @@ document.getElementById('form-aluno').addEventListener('submit', async (e) => {
     contato_telefone: fd.get('contato_telefone') || null,
     obs: fd.get('obs') || null
   };
-  const { error } = await supabase.from('alunos').insert(payload);
+  const { error } = await supabaseClient.from('alunos').insert(payload);
   if (error) { toast('Erro ao cadastrar aluno: ' + error.message, true); return; }
   toast('Aluno cadastrado com sucesso!');
   form.reset();
@@ -343,7 +343,7 @@ document.getElementById('form-aluno').addEventListener('submit', async (e) => {
 
 // ---------- EMPRÉSTIMOS ----------
 async function loadEmprestimos() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('emprestimos')
     .select('*, livros(nome), alunos(nome)')
     .eq('status', 'ativo')
@@ -388,7 +388,7 @@ document.getElementById('form-emprestimo').addEventListener('submit', async (e) 
 
   const hoje = new Date().toISOString().slice(0, 10);
 
-  const { error: errEmp } = await supabase.from('emprestimos').insert({
+  const { error: errEmp } = await supabaseClient.from('emprestimos').insert({
     livro_id,
     aluno_matricula,
     data_emprestimo: hoje,
@@ -397,7 +397,7 @@ document.getElementById('form-emprestimo').addEventListener('submit', async (e) 
   });
   if (errEmp) { toast('Erro ao registrar empréstimo: ' + errEmp.message, true); return; }
 
-  const { error: errLivro } = await supabase.from('livros').update({ disponivel: false }).eq('id', livro_id);
+  const { error: errLivro } = await supabaseClient.from('livros').update({ disponivel: false }).eq('id', livro_id);
   if (errLivro) { toast('Empréstimo criado, mas houve erro ao atualizar o livro: ' + errLivro.message, true); }
 
   toast('Empréstimo registrado com sucesso!');
@@ -408,13 +408,13 @@ document.getElementById('form-emprestimo').addEventListener('submit', async (e) 
 async function registrarDevolucao(emprestimoId, livroId) {
   const hoje = new Date().toISOString().slice(0, 10);
 
-  const { error: errEmp } = await supabase
+  const { error: errEmp } = await supabaseClient
     .from('emprestimos')
     .update({ status: 'devolvido', data_devolucao_real: hoje })
     .eq('id', emprestimoId);
   if (errEmp) { toast('Erro ao registrar devolução: ' + errEmp.message, true); return; }
 
-  const { error: errLivro } = await supabase.from('livros').update({ disponivel: true }).eq('id', livroId);
+  const { error: errLivro } = await supabaseClient.from('livros').update({ disponivel: true }).eq('id', livroId);
   if (errLivro) { toast('Devolução registrada, mas houve erro ao liberar o livro: ' + errLivro.message, true); }
 
   toast('Devolução registrada!');
