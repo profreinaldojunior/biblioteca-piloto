@@ -26,13 +26,63 @@
 
     <!-- Abas -->
     <div class="flex gap-2 border-b mb-6 overflow-x-auto">
-      <button data-tab="livros" class="tab-btn active px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">📖 Livros</button>
+      <button data-tab="dashboard" class="tab-btn active px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">🏠 Início</button>
+      <button data-tab="livros" class="tab-btn px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">📖 Livros</button>
       <button data-tab="alunos" class="tab-btn px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">🧑‍🎓 Alunos</button>
       <button data-tab="emprestimos" class="tab-btn px-4 py-2 border-b-2 border-transparent font-medium text-sm whitespace-nowrap">🔄 Empréstimos</button>
     </div>
 
+    <!-- ABA DASHBOARD -->
+    <section id="tab-dashboard" class="tab-content">
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Títulos cadastrados</p>
+          <p id="dash-titulos" class="text-2xl font-bold text-indigo-700">0</p>
+        </div>
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Exemplares no acervo</p>
+          <p id="dash-exemplares" class="text-2xl font-bold text-indigo-700">0</p>
+        </div>
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Exemplares disponíveis</p>
+          <p id="dash-disponiveis" class="text-2xl font-bold text-green-600">0</p>
+        </div>
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Empréstimos ativos</p>
+          <p id="dash-ativos" class="text-2xl font-bold text-amber-600">0</p>
+        </div>
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Empréstimos atrasados</p>
+          <p id="dash-atrasados" class="text-2xl font-bold text-red-600">0</p>
+        </div>
+        <div class="bg-white border rounded-xl p-4 shadow-sm">
+          <p class="text-xs text-gray-500">Alunos cadastrados</p>
+          <p id="dash-alunos" class="text-2xl font-bold text-indigo-700">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b">
+          <h3 class="font-semibold">Devoluções mais próximas</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-left">
+              <tr>
+                <th class="p-3">Livro</th>
+                <th class="p-3">Aluno</th>
+                <th class="p-3">Previsão</th>
+                <th class="p-3">Situação</th>
+              </tr>
+            </thead>
+            <tbody id="dash-lista-proximos"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- ABA LIVROS -->
-    <section id="tab-livros" class="tab-content">
+    <section id="tab-livros" class="tab-content hidden">
       <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
         <h3 class="font-semibold mb-3">Cadastrar novo livro</h3>
         <form id="form-livro" class="grid sm:grid-cols-2 gap-3">
@@ -59,6 +109,7 @@
                 <th class="p-3">Tipo</th>
                 <th class="p-3">No acervo</th>
                 <th class="p-3">Disponíveis</th>
+                <th class="p-3">Ações</th>
               </tr>
             </thead>
             <tbody id="lista-livros"></tbody>
@@ -107,12 +158,18 @@
       <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm">
         <h3 class="font-semibold mb-3">Registrar novo empréstimo</h3>
         <form id="form-emprestimo" class="grid sm:grid-cols-2 gap-3">
-          <select required name="livro_id" id="select-livro" class="border rounded-lg px-3 py-2 text-sm sm:col-span-2">
-            <option value="">Selecione um livro disponível</option>
-          </select>
-          <select required name="aluno_matricula" id="select-aluno" class="border rounded-lg px-3 py-2 text-sm sm:col-span-2">
-            <option value="">Selecione um aluno</option>
-          </select>
+          <div class="relative sm:col-span-2">
+            <label class="text-xs text-gray-500 block mb-1">Livro</label>
+            <input type="text" id="busca-livro" autocomplete="off" placeholder="Digite o nome do livro ou autor..." class="border rounded-lg px-3 py-2 text-sm w-full">
+            <input type="hidden" name="livro_id" id="select-livro-id">
+            <div id="lista-sugestoes-livro" class="hidden absolute z-10 bg-white border rounded-lg shadow-lg mt-1 w-full max-h-56 overflow-y-auto"></div>
+          </div>
+          <div class="relative sm:col-span-2">
+            <label class="text-xs text-gray-500 block mb-1">Aluno</label>
+            <input type="text" id="busca-aluno" autocomplete="off" placeholder="Digite o nome ou matrícula do aluno..." class="border rounded-lg px-3 py-2 text-sm w-full">
+            <input type="hidden" name="aluno_matricula" id="select-aluno-id">
+            <div id="lista-sugestoes-aluno" class="hidden absolute z-10 bg-white border rounded-lg shadow-lg mt-1 w-full max-h-56 overflow-y-auto"></div>
+          </div>
 
           <div>
             <label class="text-xs text-gray-500 block mb-1">Data do empréstimo</label>
@@ -174,6 +231,46 @@
 
   <div id="toast" class="hidden fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm shadow-lg"></div>
 
+  <footer class="mt-10 pb-4 text-center text-xs text-gray-400">
+    Desenvolvido por ReinaldoJR
+  </footer>
+
+</div>
+
+<!-- MODAL: Editar livro -->
+<div id="modal-editar-livro" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-5 w-full max-w-md shadow-lg">
+    <h3 class="font-semibold mb-3">Editar livro</h3>
+    <form id="form-editar-livro" class="grid gap-3">
+      <input type="hidden" name="id">
+      <input required name="nome" placeholder="Nome do livro" class="border rounded-lg px-3 py-2 text-sm">
+      <input required name="autor" placeholder="Autor" class="border rounded-lg px-3 py-2 text-sm">
+      <input name="tipo" placeholder="Tipo (ex: Romance, Didático)" class="border rounded-lg px-3 py-2 text-sm">
+      <input required type="number" min="0" step="1" name="quantidade" placeholder="Quantidade no acervo" class="border rounded-lg px-3 py-2 text-sm">
+      <input name="obs" placeholder="Observações" class="border rounded-lg px-3 py-2 text-sm">
+      <div class="flex gap-2 justify-end pt-2">
+        <button type="button" id="btn-cancelar-editar-livro" class="px-4 py-2 text-sm rounded-lg border">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Adicionar exemplares ao acervo de um livro já existente -->
+<div id="modal-add-exemplares" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+  <div class="bg-white rounded-xl p-5 w-full max-w-sm shadow-lg">
+    <h3 class="font-semibold mb-1">Adicionar exemplares</h3>
+    <p id="add-exemplares-livro-nome" class="text-sm text-gray-500 mb-3"></p>
+    <form id="form-add-exemplares" class="grid gap-3">
+      <input type="hidden" name="id">
+      <label class="text-xs text-gray-500 -mb-2">Quantidade a adicionar ao acervo</label>
+      <input required type="number" min="1" step="1" name="quantidade_adicional" value="1" class="border rounded-lg px-3 py-2 text-sm">
+      <div class="flex gap-2 justify-end pt-2">
+        <button type="button" id="btn-cancelar-add-exemplares" class="px-4 py-2 text-sm rounded-lg border">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">Adicionar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -248,6 +345,45 @@ async function loadAll() {
   await Promise.all([loadAlunos(), loadEmprestimos()]);
 }
 
+// ---------- Dashboard ----------
+function renderDashboard() {
+  const totalTitulos = livrosCache.length;
+  const totalExemplares = livrosCache.reduce((sum, l) => sum + Number(l.quantidade ?? 1), 0);
+  const totalDisponiveis = livrosCache.reduce((sum, l) => sum + disponiveis(l), 0);
+  const totalAtivos = emprestimosAtivosCache.length;
+  const hoje = todayISO();
+  const totalAtrasados = emprestimosAtivosCache.filter(e => e.data_prevista_devolucao && e.data_prevista_devolucao < hoje).length;
+  const totalAlunos = alunosCache.length;
+
+  document.getElementById('dash-titulos').textContent = totalTitulos;
+  document.getElementById('dash-exemplares').textContent = totalExemplares;
+  document.getElementById('dash-disponiveis').textContent = totalDisponiveis;
+  document.getElementById('dash-ativos').textContent = totalAtivos;
+  document.getElementById('dash-atrasados').textContent = totalAtrasados;
+  document.getElementById('dash-alunos').textContent = totalAlunos;
+
+  const proximos = [...emprestimosAtivosCache]
+    .sort((a, b) => (a.data_prevista_devolucao || '').localeCompare(b.data_prevista_devolucao || ''))
+    .slice(0, 5);
+
+  const tbody = document.getElementById('dash-lista-proximos');
+  tbody.innerHTML = proximos.map(e => {
+    const atrasado = e.data_prevista_devolucao && e.data_prevista_devolucao < hoje;
+    return `
+      <tr class="border-t">
+        <td class="p-3">${e.livros?.nome || '—'}</td>
+        <td class="p-3">${e.alunos?.nome || '—'}</td>
+        <td class="p-3">${fmtDate(e.data_prevista_devolucao)}</td>
+        <td class="p-3">
+          <span class="px-2 py-1 rounded-full text-xs font-medium ${atrasado ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">
+            ${atrasado ? 'Atrasado' : 'Em dia'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('') || `<tr><td class="p-3 text-gray-400" colspan="4">Nenhum empréstimo ativo no momento.</td></tr>`;
+}
+
 // ---------- LIVROS ----------
 let livrosCache = [];
 let emprestadosPorLivro = {}; // livro_id -> quantidade emprestada atualmente
@@ -268,7 +404,7 @@ async function loadLivros() {
 
   livrosCache = livros || [];
   renderLivros();
-  renderSelectLivros();
+  renderDashboard();
 }
 
 function disponiveis(livro) {
@@ -296,17 +432,91 @@ function renderLivros(filter = '') {
           ${disp > 0 ? disp + ' disponível(is)' : 'Esgotado'}
         </span>
       </td>
+      <td class="p-3 whitespace-nowrap">
+        <button data-id="${l.id}" class="btn-editar-livro text-indigo-600 hover:text-indigo-800 text-xs font-medium mr-3">Editar</button>
+        <button data-id="${l.id}" class="btn-add-exemplares text-indigo-600 hover:text-indigo-800 text-xs font-medium">+ Exemplares</button>
+      </td>
     </tr>
   `;
-  }).join('') || `<tr><td class="p-3 text-gray-400" colspan="5">Nenhum livro encontrado.</td></tr>`;
+  }).join('') || `<tr><td class="p-3 text-gray-400" colspan="6">Nenhum livro encontrado.</td></tr>`;
+
+  document.querySelectorAll('.btn-editar-livro').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const livro = livrosCache.find(l => String(l.id) === String(btn.dataset.id));
+      if (livro) abrirModalEditarLivro(livro);
+    });
+  });
+  document.querySelectorAll('.btn-add-exemplares').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const livro = livrosCache.find(l => String(l.id) === String(btn.dataset.id));
+      if (livro) abrirModalAddExemplares(livro);
+    });
+  });
 }
 
-function renderSelectLivros() {
-  const select = document.getElementById('select-livro');
-  const comDisponibilidade = livrosCache.filter(l => disponiveis(l) > 0);
-  select.innerHTML = '<option value="">Selecione um livro disponível</option>' +
-    comDisponibilidade.map(l => `<option value="${l.id}">${l.nome} — ${l.autor || ''} (${disponiveis(l)} disp.)</option>`).join('');
+// ---------- Editar livro / Adicionar exemplares ----------
+const modalEditarLivro = document.getElementById('modal-editar-livro');
+const formEditarLivro = document.getElementById('form-editar-livro');
+const modalAddExemplares = document.getElementById('modal-add-exemplares');
+const formAddExemplares = document.getElementById('form-add-exemplares');
+
+function abrirModalEditarLivro(livro) {
+  formEditarLivro.id.value = livro.id;
+  formEditarLivro.nome.value = livro.nome || '';
+  formEditarLivro.autor.value = livro.autor || '';
+  formEditarLivro.tipo.value = livro.tipo || '';
+  formEditarLivro.quantidade.value = livro.quantidade ?? 1;
+  formEditarLivro.obs.value = livro.obs || '';
+  modalEditarLivro.classList.remove('hidden');
 }
+
+document.getElementById('btn-cancelar-editar-livro').addEventListener('click', () => {
+  modalEditarLivro.classList.add('hidden');
+});
+
+formEditarLivro.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(formEditarLivro);
+  const id = fd.get('id');
+  const payload = {
+    nome: fd.get('nome'),
+    autor: fd.get('autor'),
+    tipo: fd.get('tipo') || null,
+    quantidade: Number(fd.get('quantidade')) || 0,
+    obs: fd.get('obs') || null
+  };
+  const { error } = await supabaseClient.from('livros').update(payload).eq('id', id);
+  if (error) { toast('Erro ao atualizar livro: ' + error.message, true); return; }
+  toast('Livro atualizado com sucesso!');
+  modalEditarLivro.classList.add('hidden');
+  await loadLivros();
+});
+
+function abrirModalAddExemplares(livro) {
+  formAddExemplares.id.value = livro.id;
+  formAddExemplares.quantidade_adicional.value = 1;
+  document.getElementById('add-exemplares-livro-nome').textContent = livro.nome;
+  modalAddExemplares.classList.remove('hidden');
+}
+
+document.getElementById('btn-cancelar-add-exemplares').addEventListener('click', () => {
+  modalAddExemplares.classList.add('hidden');
+});
+
+formAddExemplares.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(formAddExemplares);
+  const id = fd.get('id');
+  const delta = Number(fd.get('quantidade_adicional')) || 0;
+  const livro = livrosCache.find(l => String(l.id) === String(id));
+  if (!livro) { toast('Livro não encontrado.', true); return; }
+  const novaQuantidade = Number(livro.quantidade ?? 1) + delta;
+  const { error } = await supabaseClient.from('livros').update({ quantidade: novaQuantidade }).eq('id', id);
+  if (error) { toast('Erro ao adicionar exemplares: ' + error.message, true); return; }
+  toast(`${delta} exemplar(es) adicionado(s) com sucesso!`);
+  modalAddExemplares.classList.add('hidden');
+  await loadLivros();
+});
 
 document.getElementById('filtro-livros').addEventListener('input', e => renderLivros(e.target.value));
 
@@ -338,7 +548,7 @@ async function loadAlunos() {
   if (error) { toast('Erro ao carregar alunos: ' + error.message, true); return; }
   alunosCache = data || [];
   renderAlunos();
-  renderSelectAlunos();
+  renderDashboard();
 }
 
 function renderAlunos(filter = '') {
@@ -355,12 +565,6 @@ function renderAlunos(filter = '') {
       <td class="p-3">${a.contato_telefone || '-'}</td>
     </tr>
   `).join('') || `<tr><td class="p-3 text-gray-400" colspan="4">Nenhum aluno encontrado.</td></tr>`;
-}
-
-function renderSelectAlunos() {
-  const select = document.getElementById('select-aluno');
-  select.innerHTML = '<option value="">Selecione um aluno</option>' +
-    alunosCache.map(a => `<option value="${a.matricula}">${a.nome} (${a.matricula})</option>`).join('');
 }
 
 document.getElementById('filtro-alunos').addEventListener('input', e => renderAlunos(e.target.value));
@@ -385,6 +589,7 @@ document.getElementById('form-aluno').addEventListener('submit', async (e) => {
 
 // ---------- EMPRÉSTIMOS ----------
 let historicoCache = [];
+let emprestimosAtivosCache = [];
 
 async function loadEmprestimos() {
   const [{ data: ativosData, error: errAtivos }, { data: historicoData, error: errHist }] = await Promise.all([
@@ -403,8 +608,10 @@ async function loadEmprestimos() {
   if (errHist) { toast('Erro ao carregar histórico: ' + errHist.message, true); }
 
   renderEmprestimos(ativosData || []);
+  emprestimosAtivosCache = ativosData || [];
   historicoCache = historicoData || [];
   renderHistorico();
+  renderDashboard();
 }
 
 function renderEmprestimos(rows) {
@@ -451,6 +658,99 @@ function renderHistorico(filter = '') {
 }
 
 document.getElementById('filtro-historico').addEventListener('input', e => renderHistorico(e.target.value));
+
+// ---------- Busca de livro (combobox) para empréstimo ----------
+const comboLivroInput = document.getElementById('busca-livro');
+const comboLivroHidden = document.getElementById('select-livro-id');
+const comboLivroLista = document.getElementById('lista-sugestoes-livro');
+
+function buscarLivrosDisponiveis(query) {
+  const q = query.trim().toLowerCase();
+  const comDisponibilidade = livrosCache.filter(l => disponiveis(l) > 0);
+  if (!q) return comDisponibilidade.slice(0, 30);
+  return comDisponibilidade.filter(l =>
+    l.nome?.toLowerCase().includes(q) || l.autor?.toLowerCase().includes(q)
+  ).slice(0, 30);
+}
+
+function renderSugestoesLivro(items) {
+  if (!items.length) {
+    comboLivroLista.innerHTML = '<div class="px-3 py-2 text-sm text-gray-400">Nenhum livro disponível encontrado.</div>';
+    comboLivroLista.classList.remove('hidden');
+    return;
+  }
+  comboLivroLista.innerHTML = items.map(l => `
+    <div class="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer combo-item-livro" data-id="${l.id}" data-label="${(l.nome + ' — ' + (l.autor || '')).replace(/"/g, '&quot;')}">
+      ${l.nome} — ${l.autor || ''} <span class="text-gray-400">(${disponiveis(l)} disp.)</span>
+    </div>
+  `).join('');
+  comboLivroLista.classList.remove('hidden');
+  comboLivroLista.querySelectorAll('.combo-item-livro').forEach(el => {
+    el.addEventListener('mousedown', (ev) => {
+      ev.preventDefault();
+      comboLivroHidden.value = el.dataset.id;
+      comboLivroInput.value = el.dataset.label;
+      comboLivroLista.classList.add('hidden');
+    });
+  });
+}
+
+comboLivroInput.addEventListener('input', () => {
+  comboLivroHidden.value = '';
+  renderSugestoesLivro(buscarLivrosDisponiveis(comboLivroInput.value));
+});
+comboLivroInput.addEventListener('focus', () => {
+  renderSugestoesLivro(buscarLivrosDisponiveis(comboLivroInput.value));
+});
+comboLivroInput.addEventListener('blur', () => {
+  setTimeout(() => comboLivroLista.classList.add('hidden'), 150);
+});
+
+// ---------- Busca de aluno (combobox) para empréstimo ----------
+const comboAlunoInput = document.getElementById('busca-aluno');
+const comboAlunoHidden = document.getElementById('select-aluno-id');
+const comboAlunoLista = document.getElementById('lista-sugestoes-aluno');
+
+function buscarAlunos(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return alunosCache.slice(0, 30);
+  return alunosCache.filter(a =>
+    a.nome?.toLowerCase().includes(q) || String(a.matricula).toLowerCase().includes(q)
+  ).slice(0, 30);
+}
+
+function renderSugestoesAluno(items) {
+  if (!items.length) {
+    comboAlunoLista.innerHTML = '<div class="px-3 py-2 text-sm text-gray-400">Nenhum aluno encontrado.</div>';
+    comboAlunoLista.classList.remove('hidden');
+    return;
+  }
+  comboAlunoLista.innerHTML = items.map(a => `
+    <div class="px-3 py-2 text-sm hover:bg-indigo-50 cursor-pointer combo-item-aluno" data-id="${a.matricula}" data-label="${(a.nome + ' (' + a.matricula + ')').replace(/"/g, '&quot;')}">
+      ${a.nome} <span class="text-gray-400">(${a.matricula}${a.turma ? ' — ' + a.turma : ''})</span>
+    </div>
+  `).join('');
+  comboAlunoLista.classList.remove('hidden');
+  comboAlunoLista.querySelectorAll('.combo-item-aluno').forEach(el => {
+    el.addEventListener('mousedown', (ev) => {
+      ev.preventDefault();
+      comboAlunoHidden.value = el.dataset.id;
+      comboAlunoInput.value = el.dataset.label;
+      comboAlunoLista.classList.add('hidden');
+    });
+  });
+}
+
+comboAlunoInput.addEventListener('input', () => {
+  comboAlunoHidden.value = '';
+  renderSugestoesAluno(buscarAlunos(comboAlunoInput.value));
+});
+comboAlunoInput.addEventListener('focus', () => {
+  renderSugestoesAluno(buscarAlunos(comboAlunoInput.value));
+});
+comboAlunoInput.addEventListener('blur', () => {
+  setTimeout(() => comboAlunoLista.classList.add('hidden'), 150);
+});
 
 document.getElementById('form-emprestimo').addEventListener('submit', async (e) => {
   e.preventDefault();
